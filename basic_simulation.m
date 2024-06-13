@@ -1,7 +1,6 @@
 % This part of code gives us the average number of failures per 100
-% iterations, when we set the company with the largest asset value to fail
-% initially.
-
+% iterations, when we set a random company to fail
+% initially. This is the template for all the other codes.
 clearvars
 
 n=100; %number of organizations
@@ -15,18 +14,19 @@ iterations=100; %number of iterations for each set of parameter values
 %h -- the expected value of each organization's property asset
 
 c_range = [.1:.2:.9];
-theta_range = [.80:.03:.95];
+theta = 0.75;
 d_range = [1:1/2:20];
+std_range = [0:1:5];
 
 % We set up arrays to be populated with our simulation output.
 
-AvFailures=zeros(length(d_range),length(theta_range)*length(c_range)); % keeping track of d's, theta's and c's
-AvSomeFailures=zeros(length(d_range),length(theta_range)*length(c_range)); %Counter on fraction of iterations with some failures
+AvFailures=zeros(length(d_range),length(c_range)*length(std_range)); % keeping track of d's, theta's and c's
+AvSomeFailures=zeros(length(d_range),length(c_range)*length(std_range)); %Counter on fraction of iterations with some failures
 
 % These are 3d versions of the above arrays.
 
-AvFailures3d=zeros(length(d_range),length(theta_range),length(c_range));
-AvSomeFailures3d=zeros(length(d_range),length(theta_range),length(c_range));
+AvFailures3d=zeros(length(d_range),length(c_range),length(std_range));
+AvSomeFailures3d=zeros(length(d_range),length(c_range),length(std_range));
 
 % We will loop over all parameters. First we loop over values of integration c.
 
@@ -37,10 +37,10 @@ for c=c_range
 
 	% Next we loop over values of theta.
     
-	theta_counter=0; % counter on theta increments
+	std_counter=0; % counter on theta increments
 	
-    for theta=theta_range
-		theta_counter=theta_counter+1;
+    for std=std_range
+		std_counter=std_counter+1;
 		
 		% Then we loop over average degrees
 		
@@ -68,7 +68,7 @@ for c=c_range
                 
                 % We randomly generate for each organization a value of
                 % property asset, based on poisson distribution
-                p = normrnd(5,10,n,1);
+                p = normrnd(5,std,n,1);
                 p = max(p,0.01);
 
                 % We generate the asset matrix accordingly                
@@ -104,9 +104,8 @@ for c=c_range
                 %Failure is modeled as an organization's underlying asset value going to zero. In other words bankrutpcy costs consume all the underlying asset value. Recall that bankrutpcy costs, like the underlying assets, are distributed among the organizations according to the A matrix. Without loss of generality, we always set asset 1's value to 0.
 				
                 Dold=p; %This is the vector of initial underlying asset values.
-				D=Dold;
-                [temp_val, temp_ind] = max(D);
-				D(temp_ind)=0; %We being the cascade by setting organization 1's underlying asset value to zero.
+				D=Dold; 
+				D(1)=0; %We being the cascade by setting organization 1's underlying asset value to zero.
 				
 				%The following loop is our algorithm for calculating the minimum failure set.
 				
@@ -133,16 +132,16 @@ for c=c_range
             %To see how the simulations are progressing we print the current set of parameter values once we have done all the iterations for it.
             
             c
-			theta
+			std
 			d
             
 			%We now record our results in the arrays we set up earlier.
             
-            x=(c_counter-1)*length(theta_range)+theta_counter;%This helps order the entries we make into the 2D arrays.
+            x=(c_counter-1)*length(d_range)+std_counter;%This helps order the entries we make into the 2D arrays.
 			AvFailures(d_counter,x)=TotFailures./iterations;%average number of failues per iteration
-			AvFailures3d(d_counter,theta_counter,c_counter)=TotFailures./iterations;
+			AvFailures3d(d_counter,c_counter,theta_counter)=TotFailures./iterations;
 			AvSomeFailures(d_counter,x)=SomeFailures./iterations;%what fraction of iterations have at least one failure
-			AvSomeFailures3d(d_counter,theta_counter,c_counter)=SomeFailures./iterations;
+			AvSomeFailures3d(d_counter,c_counter,std_counter)=SomeFailures./iterations;
 
 		end
 
@@ -150,27 +149,3 @@ for c=c_range
 	end
 	
 end
-%% 
-%This part gives us the plot when we fix average node degree to be 2.5
-subplot(3,1,1)
-plot(AvFailures3d(:,:,1),'-o')
-legend("theta = 0.8", "theta = 0.83", "theta = 0.86", "theta = 0.89", "theta = 0.92", "theta = 0.95")
-title('Average Failures per 100 Iterations at c = 0.1')
-
-subplot(3,1,2)
-plot(AvFailures3d(:,:,4),'-o')
-legend("theta = 0.8", "theta = 0.83", "theta = 0.86", "theta = 0.89", "theta = 0.92", "theta = 0.95")
-title('Average Failures per 100 Iterations at c = 0.4')
-
-subplot(3,1,3)
-plot(AvFailures3d(:,:,5),'-o')
-legend("theta = 0.8", "theta = 0.83", "theta = 0.86", "theta = 0.89", "theta = 0.92", "theta = 0.95")
-title('Average Failures per 100 Iterations at c = 0.9')
-
-%%
-% This part we calculate the average number of failures at d = 1
-AvInitFailures = mean(AvFailures3d(1,:,4));
-
-%%
-% This part we calculate the average number of failures at d = 20
-AvFinalFailures = mean(AvFailures3d(end,:,4));

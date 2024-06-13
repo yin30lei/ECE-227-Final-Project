@@ -1,3 +1,6 @@
+% This part of code gives us the average number of failures per 100
+% iterations, when we set the company with the smallest asset value to fail
+% initially.
 clearvars
 
 n=100; %number of organizations
@@ -66,7 +69,7 @@ for c=c_range
                 % We randomly generate for each organization a value of
                 % property asset, based on poisson distribution
                 p = normrnd(5,1,n,1);
-                p = max(p,0);
+                p = max(p,0.01);
 
                 % We generate the asset matrix accordingly                
                 % p = poissrnd(5,n,1);
@@ -101,16 +104,19 @@ for c=c_range
                 %Failure is modeled as an organization's underlying asset value going to zero. In other words bankrutpcy costs consume all the underlying asset value. Recall that bankrutpcy costs, like the underlying assets, are distributed among the organizations according to the A matrix. Without loss of generality, we always set asset 1's value to 0.
 				
                 Dold=p; %This is the vector of initial underlying asset values.
-				D=Dold;
-                [temp_val, temp_ind] = min(D(D>0));
-				D(temp_ind)=0; %We being the cascade by setting organization 1's underlying asset value to zero.
-				
+                D=Dold;
+                temp_p = p;
+                temp_p(temp_p<=0) = 10000;
+                [temp_val, temp_ind] = min(temp_p);
+                D(temp_ind)=0;
+
 				%The following loop is our algorithm for calculating the minimum failure set.
-				
+				fail_counter = 0;
                 while ~isequal(D,Dold)%We keep looping until the vectors D and Dold are equal -- such that no new organization has just failed.
 					v=A*D; %These are the current values of organizations after the latest reductions to underlying asset values.
 					Dold=D;
 					D = D.*double(v>underlinev); %We set the underlying asset value to zero for any organizations who's value has fallen below their failure threshold.
+                    fail_counter = fail_counter + 1;
                 end
                 
                 %For the current interation we record the number of failures.

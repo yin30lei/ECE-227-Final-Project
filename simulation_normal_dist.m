@@ -1,3 +1,9 @@
+% This part of code gives us the average number of failures per 100
+% iterations, when we set a random company to fail
+% initially, with respect to different values of sigma. Specifically, it is
+% used to compare the functions w.r.t. fixed c, theta, and various sigma.
+% The generate plot shows us that increased sigma maintains the original
+% pattern of the functions, but they become less smooth.
 clearvars
 
 n=100; %number of organizations
@@ -65,8 +71,8 @@ for c=c_range
                 
                 % We randomly generate for each organization a value of
                 % property asset, based on poisson distribution
-                p = normrnd(5,10,n,1);
-                p = max(p,0);
+                p = normrnd(5,1,n,1);
+                p = max(p,0.01);
 
                 % We generate the asset matrix accordingly                
                 % p = poissrnd(5,n,1);
